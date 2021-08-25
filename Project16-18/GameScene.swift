@@ -11,12 +11,11 @@ class GameScene: SKScene {
     var scoreLabel: SKLabelNode!
     var ammoLabel: SKLabelNode!
     var reloadLabel: SKLabelNode!
-    var player: SKSpriteNode!
     
     var possibleTargets = ["stick0", "stick1", "stick2", "target0", "target1", "target2", "target3"]
     var gameTimer: Timer?
     var isGameOver = false
-    var gameTime = 60
+    var gameTime = 60.00
     
     var score = 0 {
         didSet {
@@ -46,7 +45,6 @@ class GameScene: SKScene {
         score = 0
         
         ammoLabel = SKLabelNode(fontNamed: "Chalkduster")
-//        ammoLabel.text = "Ammo: 6"
         ammoLabel.position = CGPoint(x: 408, y: 8)
         ammoLabel.horizontalAlignmentMode = .right
         ammoLabel.name = "ammoLabel"
@@ -60,10 +58,16 @@ class GameScene: SKScene {
         reloadLabel.name = "reloadLabel"
         addChild(reloadLabel)
         
-        gameTimer = Timer.scheduledTimer(timeInterval: 1, target: self, selector: #selector(createTarget), userInfo: nil, repeats: true)
+        gameTimer = Timer.scheduledTimer(timeInterval: 0.4, target: self, selector: #selector(createTarget), userInfo: nil, repeats: true)
     }
     
     @objc func createTarget() {
+        gameTime -= 0.4
+        
+        if gameTime <= 0 {
+            isGameOver = true
+        }
+        
         possibleTargets.shuffle()
         
         for i in 0...2 {
@@ -91,42 +95,36 @@ class GameScene: SKScene {
                 sprite.run(move)
             }
             
-            
             addChild(sprite)
         }
-        
-
     }
     
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
         guard let touch = touches.first else { return }
+        
         let location = touch.location(in: self)
         let tappedNodes = nodes(at: location)
         
-        for node in tappedNodes {
-            if ammo >= 1 {
-                if node.name == "target" {
-                    node.isHidden = true
-                    print("HIT!")
-                    score += 1
-                    
-                } else if node.name == "stick" {
-                    node.isHidden = true
-                    print("MISS!")
-                    score -= 1
-                    
+        if !isGameOver {
+            for node in tappedNodes {
+                if ammo >= 1 {
+                    if node.name == "target" {
+                        node.isHidden = true
+                        score += 1
+                    } else if node.name == "stick" {
+                        node.isHidden = true
+                        score -= 1
+                    }
+                }
+                
+                if node.name == "reloadLabel" {
+                    ammo = 7
                 }
             }
-            
-            
-            if node.name == "reloadLabel" {
-                ammo = 7
+            if ammo > 0 {
+                ammo -= 1
             }
         }
-        if ammo > 0 {
-            ammo -= 1
-        }
-        
     }
     
     override func update(_ currentTime: TimeInterval) {
@@ -134,6 +132,14 @@ class GameScene: SKScene {
             if node.position.x < -300 || node.position.x > 1300 {
                 node.removeFromParent()
             }
+        }
+        
+        if isGameOver {
+            gameTimer?.invalidate()
+            let gameOver = SKSpriteNode(imageNamed: "game-over")
+            gameOver.position = CGPoint(x: 512, y: 384)
+            gameOver.zPosition = 1
+            addChild(gameOver)
         }
     }
  
