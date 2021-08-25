@@ -7,9 +7,10 @@
 
 import SpriteKit
 
-class GameScene: SKScene, SKPhysicsContactDelegate {
+class GameScene: SKScene {
     var scoreLabel: SKLabelNode!
     var ammoLabel: SKLabelNode!
+    var reloadLabel: SKLabelNode!
     var player: SKSpriteNode!
     
     var possibleTargets = ["stick0", "stick1", "stick2", "target0", "target1", "target2", "target3"]
@@ -34,22 +35,30 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         woodBackground.position = CGPoint(x: 512, y: 384)
         woodBackground.blendMode = .replace
         woodBackground.zPosition = -1
+        woodBackground.name = "background"
         addChild(woodBackground)
         
         scoreLabel = SKLabelNode(fontNamed: "Chalkduster")
         scoreLabel.position = CGPoint(x: 8, y: 8)
         scoreLabel.horizontalAlignmentMode = .left
+        scoreLabel.name = "scoreLabel"
         addChild(scoreLabel)
         score = 0
         
         ammoLabel = SKLabelNode(fontNamed: "Chalkduster")
-        ammoLabel.text = "Ammo: 6"
+//        ammoLabel.text = "Ammo: 6"
         ammoLabel.position = CGPoint(x: 408, y: 8)
         ammoLabel.horizontalAlignmentMode = .right
+        ammoLabel.name = "ammoLabel"
         addChild(ammoLabel)
+        ammo = 6
         
-        physicsWorld.gravity = .zero
-        physicsWorld.contactDelegate = self
+        reloadLabel = SKLabelNode(fontNamed: "Chalkduster")
+        reloadLabel.text = "Reload"
+        reloadLabel.position = CGPoint(x: 908, y: 8)
+        reloadLabel.horizontalAlignmentMode = .right
+        reloadLabel.name = "reloadLabel"
+        addChild(reloadLabel)
         
         gameTimer = Timer.scheduledTimer(timeInterval: 1, target: self, selector: #selector(createTarget), userInfo: nil, repeats: true)
     }
@@ -65,17 +74,19 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
                 sprite.name = "stick"
             }
             
+            sprite.isHidden = false
+            
             if i == 1 {
                 sprite.position = CGPoint(x:-200, y: 400)
-                let move = SKAction.moveBy(x: 1400, y: 0, duration: 4)
+                let move = SKAction.moveBy(x: 1400, y: 0, duration: 1.5)
                 sprite.run(move)
                 
             } else if i == 2 {
-                sprite.position = CGPoint(x: 1200, y: 100)
+                sprite.position = CGPoint(x: 1200, y: 150)
                 let move = SKAction.moveBy(x: -1400, y: 0, duration: 2)
                 sprite.run(move)
             } else {
-                sprite.position = CGPoint(x: 1200, y: 700)
+                sprite.position = CGPoint(x: 1200, y: 650)
                 let move = SKAction.moveBy(x: -1400, y: 0, duration: 3)
                 sprite.run(move)
             }
@@ -93,16 +104,37 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         let tappedNodes = nodes(at: location)
         
         for node in tappedNodes {
-            if node.name == "target" {
-                print("HIT!")
-            } else if node.name == "stick" {
-                print("MISS!")
+            if ammo >= 1 {
+                if node.name == "target" {
+                    node.isHidden = true
+                    print("HIT!")
+                    score += 1
+                    
+                } else if node.name == "stick" {
+                    node.isHidden = true
+                    print("MISS!")
+                    score -= 1
+                    
+                }
+            }
+            
+            
+            if node.name == "reloadLabel" {
+                ammo = 7
             }
         }
+        if ammo > 0 {
+            ammo -= 1
+        }
+        
     }
     
     override func update(_ currentTime: TimeInterval) {
-        
+        for node in children {
+            if node.position.x < -300 || node.position.x > 1300 {
+                node.removeFromParent()
+            }
+        }
     }
  
 }
